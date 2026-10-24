@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { ArrowLeft, BookOpen, Check, ChevronDown, Download, Film, Gamepad2, Library, MoreHorizontal, Pencil, Plus, Search, Settings2, Sparkles, Trash2, Tv, Upload, X } from 'lucide-react'
+import { ArrowLeft, BookOpen, Check, ChevronDown, Download, Film, Gamepad2, Library, Pencil, Plus, Search, Settings2, Sparkles, SunMedium, Trash2, Tv, Upload, X } from 'lucide-react'
 import { db, deleteMediaCascade } from './db'
 import { exportBackup, exportLibrary, exportOne, restoreBackup } from './exporters'
 import { MEDIA_LABELS, NOTE_LABELS, type MediaItem, type MediaNote, type MediaType, type NoteType } from './types'
@@ -133,9 +133,16 @@ export default function App() {
   const [noteEditor, setNoteEditor] = useState<MediaNote | null | 'new'>(null)
   const [settings, setSettings] = useState(false)
   const [toast, setToast] = useState('')
+  const [theme, setTheme] = useState<'quiet' | 'fresh'>(() => localStorage.getItem('yeoun-theme') === 'fresh' ? 'fresh' : 'quiet')
   const restoreInput = useRef<HTMLInputElement>(null)
   const load = async () => { setMedia(await db.media.all()); setNotes(await db.notes.all()) }
   useEffect(() => { load() }, [])
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }) }, [selectedId])
+  useEffect(() => {
+    document.body.dataset.theme = theme
+    localStorage.setItem('yeoun-theme', theme)
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'fresh' ? '#fff7e7' : '#f3f5ef')
+  }, [theme])
   useEffect(() => { if (!toast) return; const timer = setTimeout(() => setToast(''), 2600); return () => clearTimeout(timer) }, [toast])
   const selected = media.find((item) => item.id === selectedId)
   const selectedNotes = notes.filter((note) => note.mediaId === selectedId).sort((a, b) => b.recordedAt.localeCompare(a.recordedAt) || b.createdAt.localeCompare(a.createdAt))
@@ -172,8 +179,11 @@ export default function App() {
     try { await restoreBackup(file); await load(); setSelectedId(undefined); setSettings(false); setToast('백업을 온전히 복원했어요.') } catch (error) { alert(error instanceof Error ? error.message : '백업을 읽지 못했어요.') }
   }
 
+  const toggleTheme = () => setTheme((current) => current === 'quiet' ? 'fresh' : 'quiet')
+  const themeLabel = theme === 'quiet' ? '상큼 모드' : '서재 모드'
+
   if (selected) return <div className="app-shell detail-shell">
-    <header className="topbar compact"><button className="brand" onClick={() => setSelectedId(undefined)}><span>Yeoun</span><small>여운</small></button><button className="button ghost back" onClick={() => setSelectedId(undefined)}><ArrowLeft /> 라이브러리</button></header>
+    <header className="topbar compact"><button className="brand" onClick={() => setSelectedId(undefined)}><span>Yeoun</span><small>여운</small></button><button className="button ghost back" onClick={() => setSelectedId(undefined)}><ArrowLeft /> 라이브러리</button><button className="theme-toggle detail-theme-toggle" type="button" aria-pressed={theme === 'fresh'} onClick={toggleTheme} title={`${themeLabel}로 전환`}><span className="theme-swatch" aria-hidden="true">{theme === 'quiet' ? <SunMedium /> : <Library />}</span><span>{themeLabel}</span></button></header>
     <main className="detail-page">
       <section className="detail-hero">
         <Cover item={selected} className="detail-cover" />
@@ -194,7 +204,7 @@ export default function App() {
   </div>
 
   return <div className="app-shell">
-    <header className="topbar"><button className="brand"><span>Yeoun</span><small>여운</small></button><nav><button className="nav-active"><Library /> 나의 서재</button><button onClick={() => setSettings(true)}><Settings2 /> 보관과 이동</button></nav><button className="button primary desktop-add" onClick={() => setMediaEditor('new')}><Plus /> 새 작품</button></header>
+    <header className="topbar"><button className="brand"><span>Yeoun</span><small>여운</small></button><nav><button className="nav-active"><Library /> 나의 서재</button><button onClick={() => setSettings(true)}><Settings2 /> 보관과 이동</button></nav><button className="theme-toggle" type="button" aria-pressed={theme === 'fresh'} onClick={toggleTheme} title={`${themeLabel}로 전환`}><span className="theme-swatch" aria-hidden="true">{theme === 'quiet' ? <SunMedium /> : <Library />}</span><span>{themeLabel}</span></button><button className="button primary desktop-add" onClick={() => setMediaEditor('new')}><Plus /> 새 작품</button></header>
     <main className="library-page">
       <section className="intro"><span className="eyebrow">MY PRIVATE ARCHIVE</span><h1>경험이 지나간 자리에<br />남는 것들.</h1><p>책과 영화, 이야기와 플레이 뒤에 남은 작은 생각을<br className="desktop-only" /> 당신만의 속도로 모아두세요.</p></section>
       <section className="library-tools">
