@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { ArrowLeft, BookOpen, Check, ChevronDown, Download, Film, Gamepad2, Library, Pencil, Plus, Search, Settings2, Sparkles, SunMedium, Trash2, Tv, Upload, X } from 'lucide-react'
+import { ArrowLeft, BookOpen, Camera, Check, ChevronDown, Download, Film, Gamepad2, ImagePlus, Library, Pencil, Plus, Search, Settings2, Sparkles, SunMedium, Trash2, Tv, Upload, X } from 'lucide-react'
 import { db, deleteMediaCascade } from './db'
 import { exportBackup, exportLibrary, exportOne, restoreBackup } from './exporters'
 import { MEDIA_LABELS, NOTE_LABELS, type MediaItem, type MediaNote, type MediaType, type NoteType } from './types'
@@ -48,7 +48,14 @@ function MediaEditor({ initial, onSave, onClose }: { initial?: MediaItem; onSave
     coverUrl: initial?.cover?.kind === 'url' ? initial.cover.url : '',
   })
   const [file, setFile] = useState<File>()
+  const [previewUrl, setPreviewUrl] = useState<string>()
   const [saving, setSaving] = useState(false)
+  useEffect(() => {
+    if (!file) { setPreviewUrl(undefined); return }
+    const url = URL.createObjectURL(file)
+    setPreviewUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [file])
   const creatorLabel = draft.type === 'book' ? '저자' : draft.type === 'movie' ? '감독' : draft.type === 'game' ? '개발사' : '제작자'
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -68,26 +75,32 @@ function MediaEditor({ initial, onSave, onClose }: { initial?: MediaItem; onSave
     await onSave(item, file)
     setSaving(false)
   }
-  return <form onSubmit={submit}>
+  return <form onSubmit={submit} className="media-editor">
     <div className="modal-head"><div><span className="eyebrow">{initial ? 'CONTENT EDIT' : 'NEW CONTENT'}</span><h2>{initial ? '작품 정보 다듬기' : '새로운 여운 담기'}</h2></div><button type="button" className="icon-button" onClick={onClose} aria-label="닫기"><X /></button></div>
-    <div className="type-picker" role="radiogroup" aria-label="미디어 유형">
-      {(Object.keys(MEDIA_LABELS) as MediaType[]).map((type) => <button type="button" role="radio" aria-checked={draft.type === type} className={draft.type === type ? 'active' : ''} key={type} onClick={() => setDraft({ ...draft, type })}>{mediaIcons[type]} {MEDIA_LABELS[type]}</button>)}
-    </div>
-    <div className="form-grid">
-      <label className="field field-full"><span>제목 <b>필수</b></span><input autoFocus required value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} placeholder="마음에 남은 작품의 이름" /></label>
-      <label className="field"><span>{creatorLabel}</span><input value={draft.creator ?? ''} onChange={(e) => setDraft({ ...draft, creator: e.target.value })} /></label>
-      <label className="field"><span>출시 연도</span><input type="number" min="0" max="9999" value={draft.releaseYear ?? ''} onChange={(e) => setDraft({ ...draft, releaseYear: Number(e.target.value) || undefined })} /></label>
-      {draft.type === 'series' && <label className="field"><span>시즌</span><input value={draft.season ?? ''} onChange={(e) => setDraft({ ...draft, season: e.target.value })} placeholder="예: Season 2" /></label>}
-      {draft.type === 'game' && <label className="field"><span>플랫폼</span><input value={draft.platform ?? ''} onChange={(e) => setDraft({ ...draft, platform: e.target.value })} placeholder="예: PC, Switch" /></label>}
-      <label className="field"><span>경험한 날짜</span><input type="date" value={draft.experienceDate ?? ''} onChange={(e) => setDraft({ ...draft, experienceDate: e.target.value })} /></label>
-      <label className="field"><span>상태</span><input value={draft.status ?? ''} onChange={(e) => setDraft({ ...draft, status: e.target.value })} placeholder={draft.type === 'book' ? '읽는 중, 완독' : draft.type === 'game' ? '플레이 중, 완료' : '보는 중, 감상 완료'} /></label>
-      <label className="field field-full"><span>태그</span><input value={draft.tagsText} onChange={(e) => setDraft({ ...draft, tagsText: e.target.value })} placeholder="쉼표로 구분해 주세요" /></label>
-      <label className="field field-full"><span>나의 한 줄</span><input value={draft.oneLineReview ?? ''} onChange={(e) => setDraft({ ...draft, oneLineReview: e.target.value })} placeholder="이 작품이 내게 남긴 것을 한 문장으로" /></label>
-    </div>
-    <div className="image-fields">
-      <label className="upload-box"><Upload /><span>{file ? file.name : '이미지 직접 올리기'}</span><small>JPG, PNG, WebP</small><input hidden type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0])} /></label>
-      <span className="or">또는</span>
-      <label className="field grow"><span>이미지 URL</span><input type="url" disabled={!!file} value={draft.coverUrl} onChange={(e) => setDraft({ ...draft, coverUrl: e.target.value })} placeholder="https://..." /></label>
+    <div className="media-editor-scroll">
+      <div className="type-picker" role="radiogroup" aria-label="미디어 유형">
+        {(Object.keys(MEDIA_LABELS) as MediaType[]).map((type) => <button type="button" role="radio" aria-checked={draft.type === type} className={draft.type === type ? 'active' : ''} key={type} onClick={() => setDraft({ ...draft, type })}>{mediaIcons[type]} {MEDIA_LABELS[type]}</button>)}
+      </div>
+      <div className="form-grid">
+        <label className="field field-full"><span>제목 <b>필수</b></span><input autoFocus required value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} placeholder="마음에 남은 작품의 이름" /></label>
+        <label className="field"><span>{creatorLabel}</span><input value={draft.creator ?? ''} onChange={(e) => setDraft({ ...draft, creator: e.target.value })} /></label>
+        <label className="field"><span>출시 연도</span><input type="number" min="0" max="9999" value={draft.releaseYear ?? ''} onChange={(e) => setDraft({ ...draft, releaseYear: Number(e.target.value) || undefined })} /></label>
+        {draft.type === 'series' && <label className="field"><span>시즌</span><input value={draft.season ?? ''} onChange={(e) => setDraft({ ...draft, season: e.target.value })} placeholder="예: Season 2" /></label>}
+        {draft.type === 'game' && <label className="field"><span>플랫폼</span><input value={draft.platform ?? ''} onChange={(e) => setDraft({ ...draft, platform: e.target.value })} placeholder="예: PC, Switch" /></label>}
+        <label className="field"><span>경험한 날짜</span><input type="date" value={draft.experienceDate ?? ''} onChange={(e) => setDraft({ ...draft, experienceDate: e.target.value })} /></label>
+        <label className="field"><span>상태</span><input value={draft.status ?? ''} onChange={(e) => setDraft({ ...draft, status: e.target.value })} placeholder={draft.type === 'book' ? '읽는 중, 완독' : draft.type === 'game' ? '플레이 중, 완료' : '보는 중, 감상 완료'} /></label>
+        <label className="field field-full"><span>태그</span><input value={draft.tagsText} onChange={(e) => setDraft({ ...draft, tagsText: e.target.value })} placeholder="쉼표로 구분해 주세요" /></label>
+        <label className="field field-full"><span>나의 한 줄</span><input value={draft.oneLineReview ?? ''} onChange={(e) => setDraft({ ...draft, oneLineReview: e.target.value })} placeholder="이 작품이 내게 남긴 것을 한 문장으로" /></label>
+      </div>
+      <section className="cover-picker" aria-labelledby="cover-picker-title">
+        <div className="cover-picker-head"><div><span id="cover-picker-title">대표 이미지</span><small>지금 촬영하거나 기기에 저장된 사진을 선택하세요.</small></div>{file && <button type="button" onClick={() => setFile(undefined)}>선택 취소</button>}</div>
+        <div className="image-source-grid">
+          <label className="upload-box camera-box"><Camera /><span>사진 촬영</span><small>카메라로 바로 담기</small><input hidden type="file" accept="image/*" capture="environment" onChange={(e) => setFile(e.target.files?.[0])} /></label>
+          <label className="upload-box"><ImagePlus /><span>사진 보관함</span><small>저장된 이미지 선택</small><input hidden type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0])} /></label>
+          {previewUrl && <div className="image-preview"><img src={previewUrl} alt="선택한 대표 이미지 미리보기" /><span>{file?.name}</span></div>}
+        </div>
+        <div className="image-url-row"><span className="or">또는</span><label className="field grow"><span>이미지 URL</span><input type="url" disabled={!!file} value={draft.coverUrl} onChange={(e) => setDraft({ ...draft, coverUrl: e.target.value })} placeholder="https://..." /></label></div>
+      </section>
     </div>
     <div className="modal-actions"><button type="button" className="button ghost" onClick={onClose}>취소</button><button className="button primary" disabled={saving || !draft.title.trim()}>{saving ? '담는 중…' : initial ? '변경사항 저장' : '라이브러리에 담기'}</button></div>
   </form>
