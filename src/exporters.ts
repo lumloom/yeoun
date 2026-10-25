@@ -1,9 +1,12 @@
 import JSZip from 'jszip'
 import { db } from './db'
-import { MEDIA_LABELS, NOTE_LABELS, type BackupData, type MediaItem, type MediaNote, type StoredAsset } from './types'
+import { NOTE_LABELS, type BackupData, type MediaItem, type MediaNote, type StoredAsset } from './types'
 
 const safeName = (value: string) => value.normalize('NFC').replace(/[<>:"/\\|?*\x00-\x1F]/g, '-').replace(/[. ]+$/g, '').trim() || '기록'
 const yamlString = (value: string) => JSON.stringify(value)
+const yamlList = (values: string[]) => JSON.stringify([...new Set(values)])
+const vaultFolder = (type: MediaItem['type']) => ({ book: '책', movie: '영화와 드라마', series: '영화와 드라마', game: '게임' })[type]
+const recordDate = (item: MediaItem) => item.experienceDate || item.createdAt.slice(0, 10)
 
 function uniqueName(base: string, used: Set<string>, extension: string) {
   let name = `${base}.${extension}`
@@ -14,17 +17,29 @@ function uniqueName(base: string, used: Set<string>, extension: string) {
 }
 
 export function mediaMarkdown(item: MediaItem, notes: MediaNote[], imagePath?: string) {
+  const date = recordDate(item)
   const rows = [
     '---',
+    `lumloom_id: yeoun-${item.id}`,
+    'schema: lumloom-record/v1',
+    'source: yeoun',
+    `record_type: ${item.type}`,
     `title: ${yamlString(item.title)}`,
-    `type: ${item.type}`,
+    `date: ${date}`,
+    `created_at: ${yamlString(item.createdAt)}`,
+    `updated_at: ${yamlString(item.updatedAt)}`,
+    'status: active',
+    `tags: ${yamlList(['lumloom', 'yeoun', ...item.tags])}`,
+    'people: []',
+    `projects: ${yamlList(['[[Lumloom]]'])}`,
+    `related: ${yamlList([`[[${date}]]`])}`,
+    'published: false',
     item.creator ? `creator: ${yamlString(item.creator)}` : '',
     item.releaseYear ? `year: ${item.releaseYear}` : '',
-    item.status ? `status: ${yamlString(item.status)}` : '',
+    item.status ? `media_status: ${yamlString(item.status)}` : '',
     item.experienceDate ? `experienced: ${item.experienceDate}` : '',
     item.platform ? `platform: ${yamlString(item.platform)}` : '',
     item.season ? `season: ${yamlString(item.season)}` : '',
-    item.tags.length ? `tags:\n${item.tags.map((tag) => `  - ${yamlString(tag)}`).join('\n')}` : '',
     '---', '', `# ${item.title}`, '',
   ].filter((line) => line !== '')
 
@@ -53,8 +68,8 @@ export async function exportOne(item: MediaItem, notes: MediaNote[]) {
     const zip = new JSZip()
     const ext = safeName(item.cover.filename).split('.').pop() || 'jpg'
     const assetName = `${base}-cover.${ext}`
-    zip.file(`${base}.md`, mediaMarkdown(item, notes, `assets/${assetName}`))
-    if (asset) zip.file(`assets/${assetName}`, asset.blob)
+    zip.file(`30. Yeoun/${vaultFolder(item.type)}/${base}.md`, mediaMarkdown(item, notes, `../../91. Attachments/Yeoun/${assetName}`))
+    if (asset) zip.file(`91. Attachments/Yeoun/${assetName}`, asset.blob)
     download(await zip.generateAsync({ type: 'blob' }), `${base}-Yeoun.zip`)
   } else {
     download(new Blob([mediaMarkdown(item, notes, item.cover?.url)], { type: 'text/markdown;charset=utf-8' }), `${base}.md`)
@@ -65,7 +80,7 @@ export async function exportLibrary(media: MediaItem[], notes: MediaNote[]) {
   const zip = new JSZip()
   const usedByFolder = new Map<string, Set<string>>()
   for (const item of media) {
-    const folder = MEDIA_LABELS[item.type]
+    const folder = vaultFolder(item.type)
     const used = usedByFolder.get(folder) ?? new Set<string>()
     usedByFolder.set(folder, used)
     const mdName = uniqueName(safeName(item.title), used, 'md')
@@ -75,11 +90,11 @@ export async function exportLibrary(media: MediaItem[], notes: MediaNote[]) {
       if (asset) {
         const ext = safeName(asset.filename).split('.').pop() || 'jpg'
         const assetName = `${item.id}-${safeName(item.title)}.${ext}`
-        zip.file(`assets/${assetName}`, asset.blob)
-        imagePath = `../assets/${assetName}`
+        zip.file(`91. Attachments/Yeoun/${assetName}`, asset.blob)
+        imagePath = `../../91. Attachments/Yeoun/${assetName}`
       }
     }
-    zip.file(`${folder}/${mdName}`, mediaMarkdown(item, notes.filter((n) => n.mediaId === item.id), imagePath))
+    zip.file(`30. Yeoun/${folder}/${mdName}`, mediaMarkdown(item, notes.filter((n) => n.mediaId === item.id), imagePath))
   }
   download(await zip.generateAsync({ type: 'blob' }), `Yeoun-${new Date().toISOString().slice(0, 10)}.zip`)
 }

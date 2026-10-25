@@ -15,6 +15,10 @@ const notes: MediaNote[] = [
 describe('mediaMarkdown', () => {
   it('creates YAML-safe frontmatter and date-ordered notes', () => {
     const output = mediaMarkdown(media, notes, '../assets/cover image.jpg')
+    expect(output).toContain('lumloom_id: yeoun-m1')
+    expect(output).toContain('schema: lumloom-record/v1')
+    expect(output).toContain('source: yeoun')
+    expect(output).toContain('record_type: book')
     expect(output).toContain('title: "데미안: 새로운 시작"')
     expect(output).toContain('creator: "헤르만 \\"헤세\\""')
     expect(output).toContain('![데미안: 새로운 시작](../assets/cover%20image.jpg)')
