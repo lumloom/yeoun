@@ -7,6 +7,7 @@ const yamlString = (value: string) => JSON.stringify(value)
 const yamlList = (values: string[]) => JSON.stringify([...new Set(values)])
 const vaultFolder = (type: MediaItem['type']) => ({ book: '책', movie: '영화와 드라마', series: '영화와 드라마', game: '게임' })[type]
 const recordDate = (item: MediaItem) => item.experienceDate || item.createdAt.slice(0, 10)
+const obsidianTimestamp = () => new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z')
 
 function uniqueName(base: string, used: Set<string>, extension: string) {
   let name = `${base}.${extension}`
@@ -50,6 +51,18 @@ export function mediaMarkdown(item: MediaItem, notes: MediaNote[], imagePath?: s
     rows.push('', `## ${note.recordedAt} | ${note.title?.trim() || NOTE_LABELS[note.noteType]}`, '', note.content)
   })
   return `${rows.join('\n')}\n`
+}
+
+export function obsidianUriForMedia(item: MediaItem, notes: MediaNote[]) {
+  const file = `01. 수집함/Yeoun/${safeName(item.title)}-${obsidianTimestamp()}.md`
+  const content = mediaMarkdown(item, notes, item.cover?.kind === 'url' ? item.cover.url : undefined)
+  return `obsidian://new?vault=${encodeURIComponent('Lumloom')}&file=${encodeURIComponent(file)}&content=${encodeURIComponent(content)}`
+}
+
+export function saveMediaToObsidian(item: MediaItem, notes: MediaNote[]) {
+  const uri = obsidianUriForMedia(item, notes)
+  if (uri.length > 12000) throw new Error('기록이 길어 Markdown 저장을 이용해 주세요.')
+  window.location.href = uri
 }
 
 function download(blob: Blob, filename: string) {

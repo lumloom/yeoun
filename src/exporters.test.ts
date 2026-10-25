@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { mediaMarkdown } from './exporters'
+import { mediaMarkdown, obsidianUriForMedia } from './exporters'
 import type { MediaItem, MediaNote } from './types'
 
 const media: MediaItem = {
@@ -23,5 +23,13 @@ describe('mediaMarkdown', () => {
     expect(output).toContain('creator: "헤르만 \\"헤세\\""')
     expect(output).toContain('![데미안: 새로운 시작](../assets/cover%20image.jpg)')
     expect(output.indexOf('2026-10-20')).toBeLessThan(output.indexOf('2026-10-24'))
+  })
+
+  it('builds a Lumloom inbox Obsidian URI from the same Markdown', () => {
+    const uri = obsidianUriForMedia(media, notes)
+    expect(uri).toContain('obsidian://new?')
+    expect(uri).toContain('vault=Lumloom')
+    expect(decodeURIComponent(uri)).toContain('01. 수집함/Yeoun/')
+    expect(decodeURIComponent(uri)).toContain('schema: lumloom-record/v1')
   })
 })

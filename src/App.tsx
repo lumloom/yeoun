@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { ArrowLeft, BookOpen, Camera, Check, ChevronDown, Download, Film, Gamepad2, ImagePlus, Library, Pencil, Plus, Search, Settings2, Sparkles, SunMedium, Trash2, Tv, Upload, X } from 'lucide-react'
+import { ArrowLeft, BookOpen, Camera, Check, ChevronDown, Download, Film, Gamepad2, ImagePlus, Library, Pencil, Plus, Search, Send, Settings2, Sparkles, SunMedium, Trash2, Tv, Upload, X } from 'lucide-react'
 import { db, deleteMediaCascade } from './db'
-import { exportBackup, exportLibrary, exportOne, restoreBackup } from './exporters'
+import { exportBackup, exportLibrary, exportOne, restoreBackup, saveMediaToObsidian } from './exporters'
 import { MEDIA_LABELS, NOTE_LABELS, type MediaItem, type MediaNote, type MediaType, type NoteType } from './types'
 
 const now = () => new Date().toISOString()
@@ -193,6 +193,11 @@ export default function App() {
 
   const toggleTheme = () => setTheme((current) => current === 'quiet' ? 'fresh' : 'quiet')
   const themeLabel = theme === 'quiet' ? '상큼 모드' : '서재 모드'
+  const saveSelectedToObsidian = () => {
+    if (!selected) return
+    try { saveMediaToObsidian(selected, selectedNotes); setToast('Obsidian으로 보내는 중이에요.') }
+    catch (error) { setToast(error instanceof Error ? error.message : 'Obsidian으로 보내지 못했어요.') }
+  }
 
   if (selected) return <div className="app-shell detail-shell">
     <header className="topbar compact"><button className="brand" onClick={() => setSelectedId(undefined)}><span>Yeoun</span><small>여운</small></button><button className="button ghost back" onClick={() => setSelectedId(undefined)}><ArrowLeft /> 라이브러리</button><button className="theme-toggle detail-theme-toggle" type="button" aria-pressed={theme === 'fresh'} onClick={toggleTheme} title={`${themeLabel}로 전환`}><span className="theme-swatch" aria-hidden="true">{theme === 'quiet' ? <SunMedium /> : <Library />}</span><span>{themeLabel}</span></button></header>
@@ -202,7 +207,7 @@ export default function App() {
         <div className="detail-info"><span className="eyebrow">{MEDIA_LABELS[selected.type]}</span><h1>{selected.title}</h1>{selected.creator && <p className="creator">{selected.creator}</p>}
           <div className="metadata">{selected.releaseYear && <span>{selected.releaseYear}</span>}{selected.status && <span>{selected.status}</span>}{selected.platform && <span>{selected.platform}</span>}{selected.season && <span>{selected.season}</span>}</div>
           {selected.tags.length > 0 && <div className="tags">{selected.tags.map((tag) => <span key={tag}>#{tag}</span>)}</div>}
-          <div className="detail-actions"><button className="button quiet" onClick={() => exportOne(selected, selectedNotes)}><Download /> Markdown</button><button className="button quiet" onClick={() => setMediaEditor(selected)}><Pencil /> 수정</button><button className="icon-button danger" onClick={removeMedia} aria-label="작품 삭제"><Trash2 /></button></div>
+          <div className="detail-actions"><button className="button quiet" onClick={() => exportOne(selected, selectedNotes)}><Download /> Markdown</button><button className="button quiet" onClick={saveSelectedToObsidian}><Send /> Obsidian에 저장</button><button className="button quiet" onClick={() => setMediaEditor(selected)}><Pencil /> 수정</button><button className="icon-button danger" onClick={removeMedia} aria-label="작품 삭제"><Trash2 /></button></div>
         </div>
       </section>
       {selected.oneLineReview && <section className="one-line"><span>나의 한 줄</span><blockquote>“{selected.oneLineReview}”</blockquote></section>}
