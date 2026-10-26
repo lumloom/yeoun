@@ -3,6 +3,8 @@ import { ArrowLeft, BookOpen, Camera, Check, ChevronDown, Download, Film, Gamepa
 import { db, deleteMediaCascade } from './db'
 import { exportBackup, exportLibrary, exportOne, restoreBackup, saveMediaToObsidian } from './exporters'
 import { MEDIA_LABELS, NOTE_LABELS, type MediaItem, type MediaNote, type MediaType, type NoteType } from './types'
+import AccountSync from './AccountSync'
+import { startSync } from './sync'
 
 const now = () => new Date().toISOString()
 const today = () => new Date().toISOString().slice(0, 10)
@@ -149,6 +151,7 @@ export default function App() {
   const restoreInput = useRef<HTMLInputElement>(null)
   const load = async () => { setMedia(await db.media.all()); setNotes(await db.notes.all()) }
   useEffect(() => { load() }, [])
+  useEffect(() => { startSync(load) }, [])
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }) }, [selectedId])
   useEffect(() => {
     document.body.dataset.theme = theme
@@ -200,7 +203,7 @@ export default function App() {
   }
 
   if (selected) return <div className="app-shell detail-shell">
-    <header className="topbar compact"><button className="brand" onClick={() => setSelectedId(undefined)}><span>Yeoun</span><small>여운</small></button><button className="button ghost back" onClick={() => setSelectedId(undefined)}><ArrowLeft /> 라이브러리</button><button className="theme-toggle detail-theme-toggle" type="button" aria-pressed={theme === 'fresh'} onClick={toggleTheme} title={`${themeLabel}로 전환`}><span className="theme-swatch" aria-hidden="true">{theme === 'quiet' ? <SunMedium /> : <Library />}</span><span>{themeLabel}</span></button></header>
+    <header className="topbar compact"><button className="brand" onClick={() => setSelectedId(undefined)}><span>Yeoun</span><small>여운</small></button><button className="button ghost back" onClick={() => setSelectedId(undefined)}><ArrowLeft /> 라이브러리</button><AccountSync /><button className="theme-toggle detail-theme-toggle" type="button" aria-pressed={theme === 'fresh'} onClick={toggleTheme} title={`${themeLabel}로 전환`}><span className="theme-swatch" aria-hidden="true">{theme === 'quiet' ? <SunMedium /> : <Library />}</span><span>{themeLabel}</span></button></header>
     <main className="detail-page">
       <section className="detail-hero">
         <Cover item={selected} className="detail-cover" />
@@ -221,7 +224,7 @@ export default function App() {
   </div>
 
   return <div className="app-shell">
-    <header className="topbar"><button className="brand"><span>Yeoun</span><small>여운</small></button><nav><button className="nav-active"><Library /> 나의 서재</button><button onClick={() => setSettings(true)}><Settings2 /> 보관과 이동</button></nav><button className="theme-toggle" type="button" aria-pressed={theme === 'fresh'} onClick={toggleTheme} title={`${themeLabel}로 전환`}><span className="theme-swatch" aria-hidden="true">{theme === 'quiet' ? <SunMedium /> : <Library />}</span><span>{themeLabel}</span></button><button className="button primary desktop-add" onClick={() => setMediaEditor('new')}><Plus /> 새 작품</button></header>
+    <header className="topbar"><button className="brand"><span>Yeoun</span><small>여운</small></button><nav><button className="nav-active"><Library /> 나의 서재</button><button onClick={() => setSettings(true)}><Settings2 /> 보관과 이동</button></nav><AccountSync /><button className="theme-toggle" type="button" aria-pressed={theme === 'fresh'} onClick={toggleTheme} title={`${themeLabel}로 전환`}><span className="theme-swatch" aria-hidden="true">{theme === 'quiet' ? <SunMedium /> : <Library />}</span><span>{themeLabel}</span></button><button className="button primary desktop-add" onClick={() => setMediaEditor('new')}><Plus /> 새 작품</button></header>
     <main className="library-page">
       <section className="intro"><span className="eyebrow">MY PRIVATE ARCHIVE</span><h1>경험이 지나간 자리에<br />남는 것들.</h1><p>책과 영화, 이야기와 플레이 뒤에 남은 작은 생각을<br className="desktop-only" /> 당신만의 속도로 모아두세요.</p></section>
       <section className="library-tools">

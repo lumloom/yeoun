@@ -31,17 +31,33 @@ async function tx<T>(storeName: string, mode: IDBTransactionMode, action: (store
   })
 }
 
+function notifySync(entityType: 'media' | 'note', entityId: string, action: 'upsert' | 'delete') {
+  window.dispatchEvent(new CustomEvent('lumloom:entity-changed', { detail: { entityType, entityId, action } }))
+}
+
+async function putEntity<T extends { id: string }>(storeName: 'media' | 'notes', entityType: 'media' | 'note', item: T, notify = true) {
+  const result = await tx<IDBValidKey>(storeName, 'readwrite', (s) => s.put(item))
+  if (notify) notifySync(entityType, item.id, 'upsert')
+  return result
+}
+
+async function deleteEntity(storeName: 'media' | 'notes', entityType: 'media' | 'note', id: string, notify = true) {
+  const result = await tx<undefined>(storeName, 'readwrite', (s) => s.delete(id))
+  if (notify) notifySync(entityType, id, 'delete')
+  return result
+}
+
 export const db = {
   media: {
     all: () => tx<MediaItem[]>('media', 'readonly', (s) => s.getAll()),
-    put: (item: MediaItem) => tx<IDBValidKey>('media', 'readwrite', (s) => s.put(item)),
-    delete: (id: string) => tx<undefined>('media', 'readwrite', (s) => s.delete(id)),
+    put: (item: MediaItem, notify = true) => putEntity('media', 'media', item, notify),
+    delete: (id: string, notify = true) => deleteEntity('media', 'media', id, notify),
     clear: () => tx<undefined>('media', 'readwrite', (s) => s.clear()),
   },
   notes: {
     all: () => tx<MediaNote[]>('notes', 'readonly', (s) => s.getAll()),
-    put: (item: MediaNote) => tx<IDBValidKey>('notes', 'readwrite', (s) => s.put(item)),
-    delete: (id: string) => tx<undefined>('notes', 'readwrite', (s) => s.delete(id)),
+    put: (item: MediaNote, notify = true) => putEntity('notes', 'note', item, notify),
+    delete: (id: string, notify = true) => deleteEntity('notes', 'note', id, notify),
     clear: () => tx<undefined>('notes', 'readwrite', (s) => s.clear()),
   },
   assets: {
