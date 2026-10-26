@@ -92,6 +92,13 @@ function setMessage(next: string, error = false) {
   void emit()
 }
 
+function syncErrorText(error: unknown) {
+  const value = error as { message?: string; details?: string; error_description?: string; code?: string } | null
+  const detail = value?.message || value?.details || value?.error_description
+  const code = value?.code ? ` (${value.code})` : ''
+  return detail ? `${detail}${code}` : '잠시 후 다시 시도해주세요.'
+}
+
 function assetPath(assetId: string) { return `${user!.id}/${APP}/${assetId}` }
 
 async function uploadAssets(record: LocalRecord) {
@@ -211,7 +218,7 @@ export async function runSync(includeUntracked = false) {
     setMessage(count ? `${count}개의 기록은 사용할 내용을 확인해야 합니다.` : `동기화 완료 · ${new Intl.DateTimeFormat('ko-KR', { hour: 'numeric', minute: '2-digit' }).format(new Date())}`)
   } catch (error) {
     console.error('Yeoun sync failed', error)
-    setMessage(`동기화하지 못했습니다. ${error instanceof Error ? error.message : '잠시 후 다시 시도해주세요.'}`, true)
+    setMessage(`동기화하지 못했습니다. ${syncErrorText(error)}`, true)
   } finally {
     busy = false
     await emit()

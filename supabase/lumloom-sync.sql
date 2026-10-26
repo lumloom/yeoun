@@ -17,6 +17,9 @@ create table if not exists public.lumloom_records (
 
 alter table public.lumloom_records enable row level security;
 
+revoke all on table public.lumloom_records from anon, authenticated;
+grant select, insert, update, delete on table public.lumloom_records to authenticated;
+
 drop policy if exists "lumloom_records_select_own" on public.lumloom_records;
 create policy "lumloom_records_select_own"
   on public.lumloom_records for select
