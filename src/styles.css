@@ -39,6 +39,13 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .sync-summary div { padding:12px; display:grid; gap:3px; border-radius:10px; background:var(--surface); }
 .sync-summary strong { font-size:19px; }.sync-summary span { color:var(--muted); font-size:10px; }
 .sync-actions { margin-top:12px; display:grid; grid-template-columns:1fr 1fr; gap:8px; }.sync-actions .button { padding:0 10px; }
+.account-password-settings { margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
+.account-password-settings summary { cursor:pointer; color:var(--muted); font-size:11px; font-weight:600; }
+.account-password-settings form { margin-top:10px; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:end; }
+.account-password-settings .field { display:grid; gap:7px; }
+.account-password-settings .field span, .account-password-settings small { color:var(--muted); font-size:11px; }
+.account-password-settings input { min-height:42px; padding:0 11px; border:1px solid var(--border); border-radius:9px; background:var(--surface); }
+.account-password-settings small { display:block; margin-top:7px; }
 .sync-conflict { margin-top:10px; padding:12px; display:grid; gap:6px; border:1px solid var(--border); border-radius:10px; background:var(--surface); font-size:11px; }
 .sync-conflict > span { color:var(--muted); }.sync-conflict div { display:flex; gap:7px; }.sync-conflict button { min-height:34px; border:1px solid var(--border); border-radius:8px; background:#f2f4ef; }
 .sync-message { margin:12px 2px 0; color:var(--muted); font-size:11px; line-height:1.6; }.sync-message.error { color:#9b4a3b; }

@@ -225,17 +225,27 @@ export async function runSync(includeUntracked = false) {
   }
 }
 
-export async function requestLogin(email: string) {
+export async function requestLogin(email: string, password: string) {
   busy = true; await emit()
-  const redirectTo = `${location.origin}${location.pathname}`
-  const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } })
+  const { error } = await supabase.auth.signInWithPassword({ email, password })
   busy = false
   if (error) {
-    const rateLimited = error.message.toLowerCase().includes('rate limit')
-    setMessage(rateLimited ? '로그인 메일 발송 한도를 초과했습니다. 잠시 후 다시 시도해주세요.' : `로그인 링크를 보내지 못했습니다. ${error.message}`, true)
+    setMessage(error.message.toLowerCase().includes('invalid login') ? '이메일 또는 비밀번호를 확인해주세요.' : `로그인하지 못했습니다. ${syncErrorText(error)}`, true)
     return false
   }
-  setMessage('메일함에서 가장 최근 Lumloom 로그인 링크를 눌러주세요.')
+  setMessage('로그인했습니다. 기록을 확인하고 있습니다…')
+  return true
+}
+
+export async function updatePassword(password: string) {
+  busy = true; await emit()
+  const { error } = await supabase.auth.updateUser({ password })
+  busy = false
+  if (error) {
+    setMessage(`비밀번호를 저장하지 못했습니다. ${syncErrorText(error)}`, true)
+    return false
+  }
+  setMessage('Lumloom 공용 비밀번호를 저장했습니다.')
   return true
 }
 
