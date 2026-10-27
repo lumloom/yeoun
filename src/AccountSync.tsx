@@ -35,7 +35,7 @@ export default function AccountSync() {
           <label className="field"><span>이메일</span><input type="email" inputMode="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@example.com" /></label>
           <label className="field"><span>비밀번호</span><input type="password" autoComplete="current-password" minLength={8} required value={password} onChange={(event) => setPassword(event.target.value)} placeholder="8자 이상" /></label>
           <button className="button primary" disabled={sync.busy}>{sync.busy ? '로그인 중…' : '로그인'}</button>
-          <small>같은 Lumloom 이메일과 비밀번호를 네 기기에서 사용합니다.</small>
+          <small>같은 Lumloom 이메일과 비밀번호를 네 기기에서 사용합니다. <a href="https://lumloom.github.io/account.html" target="_blank" rel="noreferrer">계정 만들기·비밀번호 찾기</a></small>
         </form> : <div className="account-session">
           <div className="account-email"><span>로그인한 계정</span><strong>{sync.email}</strong><button className="text-button" onClick={() => void signOut()}>로그아웃</button></div>
           <div className="sync-summary"><div><strong>{sync.localCount}</strong><span>이 기기 기록</span></div><div><strong>{sync.cloudCount}</strong><span>클라우드 기록</span></div><div><strong>{sync.conflicts.length}</strong><span>확인할 충돌</span></div></div>
