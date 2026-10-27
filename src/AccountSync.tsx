@@ -25,7 +25,10 @@ export default function AccountSync() {
   return <>
     <button className="account-trigger" type="button" onClick={() => setOpen(true)} aria-label="Lumloom 계정과 동기화">
       <span className={`account-status-dot ${sync.signedIn ? 'online' : ''}`} />
-      <span>{sync.signedIn ? sync.email : 'Lumloom 계정'}</span>
+      <span className="account-trigger-copy">
+        <strong>Lumloom 계정</strong>
+        <small>{sync.signedIn ? sync.email : '로그인하지 않음'}</small>
+      </span>
     </button>
     {open && createPortal(<div className="modal-backdrop account-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false) }}>
       <section className="modal account-modal" role="dialog" aria-modal="true" aria-labelledby="account-title">
