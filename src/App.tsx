@@ -182,8 +182,11 @@ export default function App() {
     await load(); setNoteEditor(null); setToast('기록을 고이 저장했어요.')
   }
   const removeMedia = async () => {
-    if (!selected || !confirm(`“${selected.title}”과 그 안의 모든 기록을 삭제할까요? 이 작업은 되돌릴 수 없어요.`)) return
-    await deleteMediaCascade(selected, notes); setSelectedId(undefined); await load(); setToast('작품과 기록을 삭제했어요.')
+    if (!selected) return
+    const relatedNotes = notes.filter((note) => note.mediaId === selected.id)
+    const noteCopy = relatedNotes.length ? `\n함께 저장된 세부 기록 ${relatedNotes.length}개도 삭제됩니다.` : ''
+    if (!confirm(`“${selected.title}” 항목을 삭제할까요?${noteCopy}\n삭제한 내용은 동기화된 다른 기기에서도 사라지며 되돌릴 수 없어요.`)) return
+    await deleteMediaCascade(selected, relatedNotes); setSelectedId(undefined); await load(); setToast(`${MEDIA_LABELS[selected.type]}와 기록을 삭제했어요.`)
   }
   const removeNote = async (note: MediaNote) => {
     if (!confirm('이 기록을 삭제할까요?')) return
@@ -210,7 +213,7 @@ export default function App() {
         <div className="detail-info"><span className="eyebrow">{MEDIA_LABELS[selected.type]}</span><h1>{selected.title}</h1>{selected.creator && <p className="creator">{selected.creator}</p>}
           <div className="metadata">{selected.releaseYear && <span>{selected.releaseYear}</span>}{selected.status && <span>{selected.status}</span>}{selected.platform && <span>{selected.platform}</span>}{selected.season && <span>{selected.season}</span>}</div>
           {selected.tags.length > 0 && <div className="tags">{selected.tags.map((tag) => <span key={tag}>#{tag}</span>)}</div>}
-          <div className="detail-actions"><button className="button quiet" onClick={() => exportOne(selected, selectedNotes)}><Download /> Markdown</button><button className="button quiet" onClick={saveSelectedToObsidian}><Send /> Obsidian에 저장</button><button className="button quiet" onClick={() => setMediaEditor(selected)}><Pencil /> 수정</button><button className="icon-button danger" onClick={removeMedia} aria-label="작품 삭제"><Trash2 /></button></div>
+          <div className="detail-actions"><button className="button quiet" onClick={() => exportOne(selected, selectedNotes)}><Download /> Markdown</button><button className="button quiet" onClick={saveSelectedToObsidian}><Send /> Obsidian에 저장</button><button className="button quiet" onClick={() => setMediaEditor(selected)}><Pencil /> 수정</button><button className="button danger-action" onClick={removeMedia}><Trash2 /> {MEDIA_LABELS[selected.type]} 삭제</button></div>
         </div>
       </section>
       {selected.oneLineReview && <section className="one-line"><span>나의 한 줄</span><blockquote>“{selected.oneLineReview}”</blockquote></section>}
