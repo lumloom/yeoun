@@ -26,10 +26,11 @@ describe('mediaMarkdown', () => {
   })
 
   it('builds a Lumloom inbox Obsidian URI from the same Markdown', () => {
-    const uri = obsidianUriForMedia(media, notes)
+    const uri = obsidianUriForMedia(media, notes, 'https://lumloom.github.io/yeoun/?lumloom_obsidian_saved=test-token')
     expect(uri).toContain('obsidian://new?')
     expect(uri).toContain('vault=Lumloom')
     expect(decodeURIComponent(uri)).toContain('01. 수집함/Yeoun/')
     expect(decodeURIComponent(uri)).toContain('schema: lumloom-record/v1')
+    expect(decodeURIComponent(uri)).toContain('x-success=https://lumloom.github.io/yeoun/?lumloom_obsidian_saved=test-token')
   })
 })

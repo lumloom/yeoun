@@ -5,6 +5,9 @@ import { exportBackup, exportLibrary, exportOne, restoreBackup, saveMediaToObsid
 import { MEDIA_LABELS, NOTE_LABELS, type MediaItem, type MediaNote, type MediaType, type NoteType } from './types'
 import AccountSync from './AccountSync'
 import { startSync } from './sync'
+import { beginObsidianHandoff, cancelObsidianHandoff, consumeObsidianSuccess, OBSIDIAN_UNCONFIRMED_MESSAGE, watchObsidianHandoff } from './obsidianHandoff'
+
+const OBSIDIAN_HANDOFF_KEY = 'lumloom-yeoun-obsidian-handoff'
 
 const now = () => new Date().toISOString()
 const today = () => new Date().toISOString().slice(0, 10)
@@ -152,13 +155,14 @@ export default function App() {
   const load = async () => { setMedia(await db.media.all()); setNotes(await db.notes.all()) }
   useEffect(() => { load() }, [])
   useEffect(() => { startSync(load) }, [])
+  useEffect(() => { if (consumeObsidianSuccess(OBSIDIAN_HANDOFF_KEY)) setToast('Obsidian의 Lumloom 수집함에 저장했습니다.') }, [])
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }) }, [selectedId])
   useEffect(() => {
     document.body.dataset.theme = theme
     localStorage.setItem('yeoun-theme', theme)
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'fresh' ? '#fff7e7' : '#f3f5ef')
   }, [theme])
-  useEffect(() => { if (!toast) return; const timer = setTimeout(() => setToast(''), 2600); return () => clearTimeout(timer) }, [toast])
+  useEffect(() => { if (!toast) return; const timer = setTimeout(() => setToast(''), toast.length > 45 ? 6500 : 2600); return () => clearTimeout(timer) }, [toast])
   const selected = media.find((item) => item.id === selectedId)
   const selectedNotes = notes.filter((note) => note.mediaId === selectedId).sort((a, b) => b.recordedAt.localeCompare(a.recordedAt) || b.createdAt.localeCompare(a.createdAt))
   const visible = useMemo(() => media.filter((item) => {
@@ -201,8 +205,15 @@ export default function App() {
   const themeLabel = theme === 'quiet' ? '상큼 모드' : '서재 모드'
   const saveSelectedToObsidian = () => {
     if (!selected) return
-    try { saveMediaToObsidian(selected, selectedNotes); setToast('Obsidian으로 보내는 중이에요.') }
-    catch (error) { setToast(error instanceof Error ? error.message : 'Obsidian으로 보내지 못했어요.') }
+    const handoff = beginObsidianHandoff(OBSIDIAN_HANDOFF_KEY)
+    try {
+      watchObsidianHandoff(OBSIDIAN_HANDOFF_KEY, handoff.token, () => setToast(OBSIDIAN_UNCONFIRMED_MESSAGE))
+      saveMediaToObsidian(selected, selectedNotes, handoff.successUrl)
+      setToast('Obsidian으로 보내는 중이에요.')
+    } catch (error) {
+      cancelObsidianHandoff(OBSIDIAN_HANDOFF_KEY, handoff.token)
+      setToast(error instanceof Error ? error.message : 'Obsidian으로 보내지 못했어요.')
+    }
   }
 
   if (selected) return <div className="app-shell detail-shell">

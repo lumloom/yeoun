@@ -53,14 +53,15 @@ export function mediaMarkdown(item: MediaItem, notes: MediaNote[], imagePath?: s
   return `${rows.join('\n')}\n`
 }
 
-export function obsidianUriForMedia(item: MediaItem, notes: MediaNote[]) {
+export function obsidianUriForMedia(item: MediaItem, notes: MediaNote[], successUrl?: string) {
   const file = `01. 수집함/Yeoun/${safeName(item.title)}-${obsidianTimestamp()}.md`
   const content = mediaMarkdown(item, notes, item.cover?.kind === 'url' ? item.cover.url : undefined)
-  return `obsidian://new?vault=${encodeURIComponent('Lumloom')}&file=${encodeURIComponent(file)}&content=${encodeURIComponent(content)}`
+  const success = successUrl ? `&x-success=${encodeURIComponent(successUrl)}` : ''
+  return `obsidian://new?vault=${encodeURIComponent('Lumloom')}&file=${encodeURIComponent(file)}&content=${encodeURIComponent(content)}${success}`
 }
 
-export function saveMediaToObsidian(item: MediaItem, notes: MediaNote[]) {
-  const uri = obsidianUriForMedia(item, notes)
+export function saveMediaToObsidian(item: MediaItem, notes: MediaNote[], successUrl?: string) {
+  const uri = obsidianUriForMedia(item, notes, successUrl)
   if (uri.length > 12000) throw new Error('기록이 길어 Markdown 저장을 이용해 주세요.')
   window.location.href = uri
 }
