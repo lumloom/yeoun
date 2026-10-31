@@ -1,0 +1,31 @@
+{
+  "schema_version": "lumloom-dev-log/v1",
+  "work_id": "readme-current-state-20261031",
+  "project_key": "yeoun",
+  "title": "여운 README 최신화",
+  "purpose": "선택형 Lumloom 계정 동기화, 이미지 보관, Markdown 및 Obsidian 저장 제약을 현재 구현에 맞게 문서화합니다.",
+  "category": "Documentation",
+  "status": "Completed",
+  "completed_at": "2026-10-31T22:34:07+09:00",
+  "changes": [
+    "로그인 없이도 사용할 수 있는 로컬 우선 구조와 선택형 기록 및 이미지 동기화를 함께 설명했습니다.",
+    "lumloom-record/v1, 수집함 경로, 로컬 Blob 표지 제약, x-success 확인과 백업 대안을 문서화했습니다."
+  ],
+  "technical_changes": {
+    "files": ["README.md"]
+  },
+  "tests": [
+    {
+      "name": "README-to-code consistency audit",
+      "result": "passed",
+      "details": "README의 IndexedDB, Supabase 동기화, 이미지, 내보내기와 콜백 설명을 현재 src 구현에 대조했습니다."
+    },
+    {
+      "name": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "next_actions": [],
+  "related_commit_shas": ["26d48d6", "77da9bc"],
+  "sensitive_data_review": "passed"
+}
